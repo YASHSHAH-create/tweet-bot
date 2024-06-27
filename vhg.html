@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coupon Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .add-coupon-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .add-coupon-btn:hover {
+            background-color: #45a049;
+        }
+        .edit-btn {
+            background-color: #008CBA;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .edit-btn:hover {
+            background-color: #007B9A;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="add-coupon-btn" onclick="addCoupon()">Add Coupon</button>
+        <table>
+            <thead>
+                <tr>
+                    <th>Coupon ID</th>
+                    <th>Coupon Name</th>
+                    <th>Coupon Title</th>
+                    <th>Edit</th>
+                </tr>
+            </thead>
+            <tbody id="coupon-table-body">
+                <!-- Coupon data rows will be inserted here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Example data, replace this with your dynamic data source
+        const coupons = [
+            { id: 1, name: 'Discount10', title: '10% Off' },
+            { id: 2, name: 'FreeShip', title: 'Free Shipping' },
+            { id: 3, name: 'Save20', title: '20% Savings' }
+        ];
+
+        function populateTable() {
+            const tableBody = document.getElementById('coupon-table-body');
+            tableBody.innerHTML = '';
+
+            coupons.forEach(coupon => {
+                const row = document.createElement('tr');
+
+                row.innerHTML = `
+                    <td>${coupon.id}</td>
+                    <td>${coupon.name}</td>
+                    <td>${coupon.title}</td>
+                    <td><button class="edit-btn" onclick="editCoupon(${coupon.id})">Edit</button></td>
+                `;
+
+                tableBody.appendChild(row);
+            });
+        }
+
+        function addCoupon() {
+            // Add coupon logic
+            alert('Add Coupon button clicked!');
+        }
+
+        function editCoupon(id) {
+            // Edit coupon logic
+            alert('Edit button clicked for Coupon ID: ' + id);
+        }
+
+        // Initialize table with example data
+        populateTable();
+    </script>
+</body>
+</html>

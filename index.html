@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini API Helper</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 300px;
+            overflow-y: auto;
+            max-height: 80vh;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        button.loading {
+            cursor: not-allowed;
+        }
+
+        button .spinner {
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid #fff;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+            position: absolute;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        #response {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #333;
+            white-space: pre-wrap;
+            text-align: left;
+        }
+
+        #consoleMessages {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #555;
+            white-space: pre-wrap;
+            text-align: left;
+        }
+
+        .copy-button,
+        .tweet-button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .copy-button:hover,
+        .tweet-button:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1><strong>Generate your tweet..</strong></h1>
+        <input type="text" id="userInput" placeholder="Enter your text">
+        <button id="generateButton" onclick="generateAnswer()">Generate</button>
+        <p id="response"></p>
+        <p id="consoleMessages"></p>
+        <button class="copy-button" id="copyButton" onclick="copyResponse()" style="display: none;" disabled>Copy
+            Response</button>
+        <button class="tweet-button" id="tweetButton" onclick="postTweet()" style="display: none;" disabled>Post as
+            Tweet</button>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+
+    <script>
+        const socket = io();
+      
+        socket.on('consoleMessage', (message) => {
+          const consoleMessagesElement = document.getElementById('consoleMessages');
+          consoleMessagesElement.innerText += message + '\n';
+        });
+      
+        async function generateAnswer() {
+          const userInput = document.getElementById('userInput').value;
+          const responseElement = document.getElementById('response');
+          const consoleMessagesElement = document.getElementById('consoleMessages');
+          const generateButton = document.getElementById('generateButton');
+          const copyButton = document.getElementById('copyButton');
+          const tweetButton = document.getElementById('tweetButton');
+      
+          generateButton.innerHTML = '<div class="spinner"></div>';
+          generateButton.classList.add('loading');
+      
+          try {
+            const response = await fetch('/api/generate', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ input: userInput })
+            });
+      
+            const data = await response.json();
+            responseElement.innerHTML = `<strong>${data.answer}</strong>`;
+            copyButton.style.display = 'inline-block';
+            tweetButton.style.display = 'inline-block';
+            copyButton.disabled = false;
+            tweetButton.disabled = false;
+      
+            animateResponse();
+          } catch (error) {
+            responseElement.innerText = 'Error fetching answer';
+            consoleMessagesElement.innerText = error.message;
+          } finally {
+            generateButton.innerHTML = 'Generate';
+            generateButton.classList.remove('loading');
+          }
+        }
+      
+        async function postTweet() {
+          const responseElement = document.getElementById('response').innerText;
+      
+          try {
+            const response = await fetch('/api/postTweet', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ tweet: responseElement })
+            });
+            const data = await response.json();
+            alert("Tweet posted successfully");
+          } catch (error) {
+            console.error('Error posting tweet:', error);
+            alert('Error posting tweet');
+          }
+        }
+      
+        function animateResponse() {
+          const responseElement = document.getElementById('response');
+          responseElement.style.animation = 'none';
+          responseElement.offsetHeight;
+          responseElement.style.animation = null;
+        }
+      
+        function copyResponse() {
+          const responseElement = document.getElementById('response');
+          const tempTextarea = document.createElement('textarea');
+          tempTextarea.value = responseElement.innerText;
+          document.body.appendChild(tempTextarea);
+          tempTextarea.select();
+          document.execCommand('copy');
+          document.body.removeChild(tempTextarea);
+        }
+      </script>
+      
+</body>
+
+</html>
