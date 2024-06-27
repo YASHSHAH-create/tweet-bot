@@ -31,7 +31,9 @@
             margin-bottom: 20px;
         }
 
-        input[type="text"] {
+        input[type="text"],
+        input[type="datetime-local"],
+        select {
             width: 100%;
             padding: 10px;
             margin-bottom: 10px;
@@ -121,6 +123,12 @@
     <div class="container">
         <h1><strong>Generate your tweet..</strong></h1>
         <input type="text" id="userInput" placeholder="Enter your text">
+        <input type="datetime-local" id="scheduleTime">
+        <select id="recurrence">
+            <option value="one-time">One Time</option>
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+        </select>
         <button id="generateButton" onclick="generateAnswer()">Generate</button>
         <p id="response"></p>
         <p id="consoleMessages"></p>
@@ -133,86 +141,88 @@
 
     <script>
         const socket = io();
-      
+
         socket.on('consoleMessage', (message) => {
-          const consoleMessagesElement = document.getElementById('consoleMessages');
-          consoleMessagesElement.innerText += message + '\n';
+            const consoleMessagesElement = document.getElementById('consoleMessages');
+            consoleMessagesElement.innerText += message + '\n';
         });
-      
+
         async function generateAnswer() {
-          const userInput = document.getElementById('userInput').value;
-          const responseElement = document.getElementById('response');
-          const consoleMessagesElement = document.getElementById('consoleMessages');
-          const generateButton = document.getElementById('generateButton');
-          const copyButton = document.getElementById('copyButton');
-          const tweetButton = document.getElementById('tweetButton');
-      
-          generateButton.innerHTML = '<div class="spinner"></div>';
-          generateButton.classList.add('loading');
-      
-          try {
-            const response = await fetch('/api/generate', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ input: userInput })
-            });
-      
-            const data = await response.json();
-            responseElement.innerHTML = `<strong>${data.answer}</strong>`;
-            copyButton.style.display = 'inline-block';
-            tweetButton.style.display = 'inline-block';
-            copyButton.disabled = false;
-            tweetButton.disabled = false;
-      
-            animateResponse();
-          } catch (error) {
-            responseElement.innerText = 'Error fetching answer';
-            consoleMessagesElement.innerText = error.message;
-          } finally {
-            generateButton.innerHTML = 'Generate';
-            generateButton.classList.remove('loading');
-          }
+            const userInput = document.getElementById('userInput').value;
+            const responseElement = document.getElementById('response');
+            const consoleMessagesElement = document.getElementById('consoleMessages');
+            const generateButton = document.getElementById('generateButton');
+            const copyButton = document.getElementById('copyButton');
+            const tweetButton = document.getElementById('tweetButton');
+
+            generateButton.innerHTML = '<div class="spinner"></div>';
+            generateButton.classList.add('loading');
+
+            try {
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ input: userInput })
+                });
+
+                const data = await response.json();
+                responseElement.innerHTML = `<strong>${data.answer}</strong>`;
+                copyButton.style.display = 'inline-block';
+                tweetButton.style.display = 'inline-block';
+                copyButton.disabled = false;
+                tweetButton.disabled = false;
+
+                animateResponse();
+            } catch (error) {
+                responseElement.innerText = 'Error fetching answer';
+                consoleMessagesElement.innerText = error.message;
+            } finally {
+                generateButton.innerHTML = 'Generate';
+                generateButton.classList.remove('loading');
+            }
         }
-      
+
         async function postTweet() {
-          const responseElement = document.getElementById('response').innerText;
-      
-          try {
-            const response = await fetch('/api/postTweet', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ tweet: responseElement })
-            });
-            const data = await response.json();
-            alert("Tweet posted successfully");
-          } catch (error) {
-            console.error('Error posting tweet:', error);
-            alert('Error posting tweet');
-          }
+            const responseElement = document.getElementById('response').innerText;
+            const scheduleTime = document.getElementById('scheduleTime').value;
+            const recurrence = document.getElementById('recurrence').value;
+
+            try {
+                const response = await fetch('/api/postTweet', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ tweet: responseElement, scheduleTime, recurrence })
+                });
+                const data = await response.json();
+                alert("Tweet scheduled successfully");
+            } catch (error) {
+                console.error('Error scheduling tweet:', error);
+                alert('Error scheduling tweet');
+            }
         }
-      
+
         function animateResponse() {
-          const responseElement = document.getElementById('response');
-          responseElement.style.animation = 'none';
-          responseElement.offsetHeight;
-          responseElement.style.animation = null;
+            const responseElement = document.getElementById('response');
+            responseElement.style.animation = 'none';
+            responseElement.offsetHeight;
+            responseElement.style.animation = null;
         }
-      
+
         function copyResponse() {
-          const responseElement = document.getElementById('response');
-          const tempTextarea = document.createElement('textarea');
-          tempTextarea.value = responseElement.innerText;
-          document.body.appendChild(tempTextarea);
-          tempTextarea.select();
-          document.execCommand('copy');
-          document.body.removeChild(tempTextarea);
+            const responseElement = document.getElementById('response');
+            const tempTextarea = document.createElement('textarea');
+            tempTextarea.value = responseElement.innerText;
+            document.body.appendChild(tempTextarea);
+            tempTextarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempTextarea);
         }
-      </script>
-      
+    </script>
+
 </body>
 
 </html>
