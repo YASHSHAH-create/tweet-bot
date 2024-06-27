@@ -3,9 +3,12 @@ require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 const http = require('http');
 const socketIo = require('socket.io');
+
+puppeteer.use(StealthPlugin());
 
 const app = express();
 const port = 3000;
@@ -43,18 +46,42 @@ app.post('/api/postTweet', async (req, res) => {
   const socket = req.app.get('socket');
 
   try {
-    const browser = await puppeteer.launch({ headless: false });
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--disable-gpu',
+        '--window-size=1920x1080',
+        '--disable-dev-shm-usage',
+        '--single-process',
+        '--no-zygote',
+        '--disable-gpu',
+        '--dns-prefetch-disable',
+        '--disable-features=IsolateOrigins,site-per-process',
+      ],
+    });
+
     const page = await browser.newPage();
+
+    // Set custom DNS server (optional)
+    await page.evaluateOnNewDocument(() => {
+      Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+    });
 
     sendEvent(socket, 'Waiting for username input...');
     await page.goto('https://twitter.com/login', { waitUntil: 'networkidle2' });
 
-    await page.waitForSelector('input[name="text"]', { visible: true });
+    await page.waitForSelector('input[name="text"]', { visible: true, timeout: 60000 });
     await page.type('input[name="text"]', 'YashSha73564414');
     await page.keyboard.press('Enter');
     
     sendEvent(socket, 'Waiting for password input...');
-    await page.waitForSelector('input[name="password"]', { visible: true });
+    await page.waitForSelector('input[name="password"]', { visible: true, timeout: 60000 });
     await page.type('input[name="password"]', 'yshah123r');
     await page.keyboard.press('Enter');
 
@@ -63,9 +90,9 @@ app.post('/api/postTweet', async (req, res) => {
 
     sendEvent(socket, 'Login successful!');
     sendEvent(socket, 'Attempting to post tweet...');
-    await page.waitForSelector('div[data-testid="tweetTextarea_0"]', { visible: true });
+    await page.waitForSelector('div[data-testid="tweetTextarea_0"]', { visible: true, timeout: 60000 });
     await page.type('div[data-testid="tweetTextarea_0"]', tweetText);
-    await page.waitForSelector('button[data-testid="tweetButtonInline"]', { visible: true });
+    await page.waitForSelector('button[data-testid="tweetButtonInline"]', { visible: true, timeout: 60000 });
     await page.click('button[data-testid="tweetButtonInline"]');
 
     sendEvent(socket, 'Tweet posted successfully!');
