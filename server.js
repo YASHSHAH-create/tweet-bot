@@ -7,6 +7,8 @@ const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 const http = require('http');
 const socketIo = require('socket.io');
+const fs = require('fs');
+const path = require('path');
 
 puppeteer.use(StealthPlugin());
 
@@ -23,6 +25,18 @@ app.use(express.static('public'));
 
 function sendEvent(socket, message) {
   socket.emit('consoleMessage', message);
+}
+
+// Function to save cookies
+async function saveCookies(page, filePath) {
+  const cookies = await page.cookies();
+  fs.writeFileSync(filePath, JSON.stringify(cookies, null, 2));
+}
+
+// Function to load cookies
+async function loadCookies(page, filePath) {
+  const cookies = JSON.parse(fs.readFileSync(filePath));
+  await page.setCookie(...cookies);
 }
 
 app.post('/api/generate', async (req, res) => {
@@ -44,10 +58,11 @@ app.post('/api/generate', async (req, res) => {
 app.post('/api/postTweet', async (req, res) => {
   const tweetText = req.body.tweet;
   const socket = req.app.get('socket');
+  const cookiesPath = path.join(__dirname, 'cookies.json');
 
   try {
     const browser = await puppeteer.launch({
-      headless: true,
+      headless: "new",
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -68,27 +83,31 @@ app.post('/api/postTweet', async (req, res) => {
 
     const page = await browser.newPage();
 
-    // Set custom DNS server (optional)
-    await page.evaluateOnNewDocument(() => {
-      Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
-    });
+    if (fs.existsSync(cookiesPath)) {
+      await loadCookies(page, cookiesPath);
+      await page.goto('https://twitter.com/home', { waitUntil: 'networkidle2' });
+      sendEvent(socket, 'Loaded cookies and navigated to Twitter.');
+    } else {
+      sendEvent(socket, 'Logging in to Twitter...');
+      await page.goto('https://twitter.com/login', { waitUntil: 'networkidle2' });
+      
+      await page.waitForSelector('input[name="text"]', { visible: true, timeout: 60000 });
+      await page.type('input[name="text"]', 'YashSha73564414');
+      await page.keyboard.press('Enter');
+      
+      sendEvent(socket, 'Waiting for password input...');
+      await page.waitForSelector('input[name="password"]', { visible: true, timeout: 60000 });
+      await page.type('input[name="password"]', 'yshah123r');
+      await page.keyboard.press('Enter');
+      
+      sendEvent(socket, 'Waiting for navigation after login...');
+      await page.waitForNavigation({ waitUntil: 'networkidle2' });
+      
+      sendEvent(socket, 'Login successful!');
+      await saveCookies(page, cookiesPath);
+      sendEvent(socket, 'Cookies saved successfully.');
+    }
 
-    sendEvent(socket, 'Waiting for username input...');
-    await page.goto('https://twitter.com/login', { waitUntil: 'networkidle2' });
-
-    await page.waitForSelector('input[name="text"]', { visible: true, timeout: 60000 });
-    await page.type('input[name="text"]', 'YashSha73564414');
-    await page.keyboard.press('Enter');
-    
-    sendEvent(socket, 'Waiting for password input...');
-    await page.waitForSelector('input[name="password"]', { visible: true, timeout: 60000 });
-    await page.type('input[name="password"]', 'yshah123r');
-    await page.keyboard.press('Enter');
-
-    sendEvent(socket, 'Waiting for navigation after login...');
-    await page.waitForNavigation({ waitUntil: 'networkidle2' });
-
-    sendEvent(socket, 'Login successful!');
     sendEvent(socket, 'Attempting to post tweet...');
     await page.waitForSelector('div[data-testid="tweetTextarea_0"]', { visible: true, timeout: 60000 });
     await page.type('div[data-testid="tweetTextarea_0"]', tweetText);
