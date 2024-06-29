@@ -49,8 +49,7 @@ app.post('/api/postTweet', async (req, res) => {
 
   try {
     const browser = await puppeteer.launch({
-      headless: 'new',
-      executablePath: '/usr/bin/google-chrome', // Path where Google Chrome is installed
+      headless: false,
       args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
