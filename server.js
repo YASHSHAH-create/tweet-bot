@@ -27,18 +27,6 @@ function sendEvent(socket, message) {
   socket.emit('consoleMessage', message);
 }
 
-// Function to save cookies
-async function saveCookies(page, filePath) {
-  const cookies = await page.cookies();
-  fs.writeFileSync(filePath, JSON.stringify(cookies, null, 2));
-}
-
-// Function to load cookies
-async function loadCookies(page, filePath) {
-  const cookies = JSON.parse(fs.readFileSync(filePath));
-  await page.setCookie(...cookies);
-}
-
 app.post('/api/generate', async (req, res) => {
   const userInput = req.body.input;
 
@@ -58,11 +46,10 @@ app.post('/api/generate', async (req, res) => {
 app.post('/api/postTweet', async (req, res) => {
   const tweetText = req.body.tweet;
   const socket = req.app.get('socket');
-  const cookiesPath = path.join(__dirname, 'cookies.json');
 
   try {
     const browser = await puppeteer.launch({
-      headless: "new",
+      headless: false,
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -79,37 +66,61 @@ app.post('/api/postTweet', async (req, res) => {
         '--dns-prefetch-disable',
         '--disable-features=IsolateOrigins,site-per-process',
       ],
+      userDataDir: './temp'
     });
 
     const page = await browser.newPage();
 
-    if (fs.existsSync(cookiesPath)) {
-      await loadCookies(page, cookiesPath);
-      await page.goto('https://twitter.com/home', { waitUntil: 'networkidle2' });
-      sendEvent(socket, 'Loaded cookies and navigated to Twitter.');
-    } else {
-      sendEvent(socket, 'Logging in to Twitter...');
-      await page.goto('https://twitter.com/login', { waitUntil: 'networkidle2' });
-      
-      await page.waitForSelector('input[name="text"]', { visible: true, timeout: 60000 });
-      await page.type('input[name="text"]', 'YashSha73564414');
-      await page.keyboard.press('Enter');
-      
-      sendEvent(socket, 'Waiting for password input...');
-      await page.waitForSelector('input[name="password"]', { visible: true, timeout: 60000 });
-      await page.type('input[name="password"]', 'yshah123r');
-      await page.keyboard.press('Enter');
-      
-      sendEvent(socket, 'Waiting for navigation after login...');
-      await page.waitForNavigation({ waitUntil: 'networkidle2' });
+    // Set custom DNS server (optional)
+    await page.evaluateOnNewDocument(() => {
+      Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+    });
+
+    sendEvent(socket, 'Waiting for username input...');
+    await page.goto('https://twitter.com/login', { waitUntil: 'networkidle2' });
+
+    async function lognin(params) {      
+
+      try {
+        await page.waitForSelector('input[name="text"]', { visible: true, timeout: 60000 });
+        await page.type('input[name="text"]', 'YashSha73564414');
+        await page.keyboard.press('Enter');
+        await page.waitForSelector('input[name="text"]', { visible: true, timeout: 60000 });
+        await page.type('input[name="text"]', 'yash11122er@gmail.com');
+        await page.keyboard.press('Enter');
+        
+        sendEvent(socket, 'Waiting for password input...');
+        await page.waitForSelector('input[name="password"]', { visible: true, timeout: 60000 });
+        await page.type('input[name="password"]', 'yshah123r');
+        await page.keyboard.press('Enter');
+        
+        sendEvent(socket, 'Taking screenshot...');
+        
+        setTimeout(async () => {
+          const screenshotPath = path.join(__dirname, 'public', 'screenshot.png');
+          await page.screenshot({ path: screenshotPath, fullPage: true });
+        }, 3000); // 3000 milliseconds = 3 seconds
+        
+        sendEvent(socket, 'Screenshot taken and saved successfully!');
+        sendEvent(socket, 'Waiting for navigation after login...');
+        await page.waitForNavigation({ waitUntil: 'networkidle2' });
+      } catch (error) {
+        console.log('login error');
+      }
       
       sendEvent(socket, 'Login successful!');
-      await saveCookies(page, cookiesPath);
-      sendEvent(socket, 'Cookies saved successfully.');
     }
 
-    sendEvent(socket, 'Attempting to post tweet...');
-    await page.waitForSelector('div[data-testid="tweetTextarea_0"]', { visible: true, timeout: 60000 });
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    console.log(page.url())
+    if (page.url().includes('/home')) {
+      sendEvent(socket, 'Login skipped');
+    }
+
+    lognin();
+      
+    // sendEvent(socket, 'Attempting to post tweet...');
+    await page.waitForSelector('div[data-testid="tweetTextarea_0"]', { visible: true, timeout: 0 });
     await page.type('div[data-testid="tweetTextarea_0"]', tweetText);
     await page.waitForSelector('button[data-testid="tweetButtonInline"]', { visible: true, timeout: 60000 });
     await page.click('button[data-testid="tweetButtonInline"]');
