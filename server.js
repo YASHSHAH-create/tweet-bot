@@ -49,26 +49,23 @@ app.post('/api/postTweet', async (req, res) => {
 
   try {
     const browser = await puppeteer.launch({
-      headless: false,
+      headless: 'new',
+      executablePath: '/usr/bin/google-chrome', // Path where Google Chrome is installed
       args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--disable-gpu',
-        '--window-size=1920x1080',
-        '--disable-dev-shm-usage',
-        '--single-process',
-        '--no-zygote',
-        '--disable-gpu',
-        '--dns-prefetch-disable',
-        '--disable-features=IsolateOrigins,site-per-process',
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--disable-gpu',
+          '--window-size=1920x1080',
+          '--dns-prefetch-disable',
+          '--disable-features=IsolateOrigins,site-per-process',
       ],
       userDataDir: './temp'
-    });
-
+  });
+  
     const page = await browser.newPage();
 
     // Set custom DNS server (optional)
