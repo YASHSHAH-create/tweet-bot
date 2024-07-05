@@ -1,3 +1,4 @@
-2024/06/29-21:38:32.367 c803 Reusing MANIFEST /Users/yashshah/Desktop/kk/temp/Default/shared_proto_db/MANIFEST-000001
-2024/06/29-21:38:32.367 c803 Recovering log #3
-2024/06/29-21:38:32.368 c803 Reusing old log /Users/yashshah/Desktop/kk/temp/Default/shared_proto_db/000003.log 
+2024/07/05-13:27:08.994 d007 Reusing MANIFEST /Users/yashshah/Desktop/kk/temp/Default/shared_proto_db/MANIFEST-000001
+2024/07/05-13:27:08.994 d007 Recovering log #3
+2024/07/05-13:27:09.051 d007 (ignoring error) /Users/yashshah/Desktop/kk/temp/Default/shared_proto_db/000003.log: dropping 227 bytes; Corruption: missing start of fragmented record(2)
+2024/07/05-13:27:09.052 d007 Reusing old log /Users/yashshah/Desktop/kk/temp/Default/shared_proto_db/000003.log 

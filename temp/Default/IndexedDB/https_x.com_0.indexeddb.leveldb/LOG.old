@@ -1,3 +1,3 @@
-2024/06/29-21:38:35.513 f403 Reusing MANIFEST /Users/yashshah/Desktop/kk/temp/Default/IndexedDB/https_x.com_0.indexeddb.leveldb/MANIFEST-000001
-2024/06/29-21:38:35.513 f403 Recovering log #3
-2024/06/29-21:38:35.514 f403 Reusing old log /Users/yashshah/Desktop/kk/temp/Default/IndexedDB/https_x.com_0.indexeddb.leveldb/000003.log 
+2024/07/05-13:27:09.765 b803 Reusing MANIFEST /Users/yashshah/Desktop/kk/temp/Default/IndexedDB/https_x.com_0.indexeddb.leveldb/MANIFEST-000001
+2024/07/05-13:27:09.765 b803 Recovering log #3
+2024/07/05-13:27:09.771 b803 Reusing old log /Users/yashshah/Desktop/kk/temp/Default/IndexedDB/https_x.com_0.indexeddb.leveldb/000003.log 
